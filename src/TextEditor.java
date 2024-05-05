@@ -37,7 +37,7 @@ public class TextEditor extends JFrame implements ActionListener {
 
         textArea = new JTextArea();
         textArea.setEditable(true);
-        textArea.setLineWrap(true);
+        textArea.setLineWrap(false);
         textArea.setFont(font);
         textArea.setSize(this.getSize());
 
@@ -123,7 +123,8 @@ public class TextEditor extends JFrame implements ActionListener {
 
         if (e.getSource() == fontSettigsItem)
         {
-            new FontChooser();
+            new FontChooser(this, true);
+            textArea.setFont(font);
         }
     }
 
