@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.*;
 
 public class TextEditor extends JFrame implements ActionListener {
@@ -28,7 +29,6 @@ public class TextEditor extends JFrame implements ActionListener {
     private BufferedReader reader;
     private BufferedWriter writer;
 
-
     public static Font font = new Font("Roboto", Font.PLAIN, 14);
 
     public TextEditor(){
@@ -54,7 +54,7 @@ public class TextEditor extends JFrame implements ActionListener {
         };
 
         fileChooser = new JFileChooser();
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setFileFilter(fileFilter);
 
         menuBar = new JMenuBar();
@@ -97,7 +97,6 @@ public class TextEditor extends JFrame implements ActionListener {
 
         helpMenu.add(aboutMenuItem);
 
-
         this.setContentPane(scrollPane);
         //this.getContentPane().add(scrollPane);
         this.setJMenuBar(menuBar);
@@ -108,17 +107,30 @@ public class TextEditor extends JFrame implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if(e.getSource() == openMenuItem){
+        if(e.getSource() == openMenuItem)
             openFile();
-        }
-        if(e.getSource() == saveMenuItem){
+
+        if(e.getSource() == saveMenuItem)
             saveFile();
-        }
-        if(e.getSource() == saveAsMenuItem){
+
+        if(e.getSource() == saveAsMenuItem)
             saveAsFile();
-        }
-        if(e.getSource() == exitMenuItem){
+
+        if(e.getSource() == exitMenuItem)
             System.exit(0);
+
+        if (e.getSource() == copyMenuItem)
+            copy();
+
+        if (e.getSource() == cutMenuItem)
+            cut();
+
+        if (e.getSource() == pasteMenuItem)
+            paste();
+
+        if (e.getSource() == aboutMenuItem)
+        {
+            JOptionPane.showMessageDialog(null, "This is a text editor that includes features like \nchanging the font and is made in java", "About",JOptionPane.INFORMATION_MESSAGE);
         }
 
         if (e.getSource() == fontSettigsItem)
@@ -204,4 +216,46 @@ public class TextEditor extends JFrame implements ActionListener {
         }
     }
 
+    private void copy()
+    {
+        try {
+            Robot robot = new Robot();
+
+            robot.keyPress(KeyEvent.VK_CONTROL);
+            robot.keyPress(KeyEvent.VK_C);
+            robot.keyRelease(KeyEvent.VK_CONTROL);
+            robot.keyRelease(KeyEvent.VK_C);
+        }catch (AWTException ex)
+        {
+            ex.printStackTrace();
+        }
+    }
+
+    private void cut()
+    {
+        try {
+            Robot robot = new Robot();
+            robot.keyPress(KeyEvent.VK_CONTROL);
+            robot.keyPress(KeyEvent.VK_X);
+            robot.keyRelease(KeyEvent.VK_X);
+            robot.keyRelease(KeyEvent.VK_CONTROL);
+        }catch (AWTException ex)
+        {
+            ex.printStackTrace();
+        }
+    }
+
+    private void paste()
+    {
+        try {
+            Robot robot = new Robot();
+            robot.keyPress(KeyEvent.VK_CONTROL);
+            robot.keyPress(KeyEvent.VK_V);
+            robot.keyRelease(KeyEvent.VK_V);
+            robot.keyRelease(KeyEvent.VK_CONTROL);
+        }catch (AWTException ex)
+        {
+            ex.printStackTrace();
+        }
+    }
 }

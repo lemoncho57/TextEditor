@@ -15,6 +15,10 @@ public class FontChooser extends JDialog implements ActionListener {
     private JButton okB;
     private JButton cancelB;
 
+    private JLabel fontLabel;
+    private JLabel fontStyleLabel;
+    private JLabel fontSizeLabel;
+
     private Font font;
 
     String[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
@@ -52,9 +56,20 @@ public class FontChooser extends JDialog implements ActionListener {
         }
         fontSize.setSelectedItem(font.getSize());
 
+        textField.setFont(font);
+
         fontNames.addActionListener(this);
         fontStyles.addActionListener(this);
         fontSize.addActionListener(this);
+
+        fontLabel = new JLabel("Font:");
+        fontLabel.setBounds(40, 5, 150, 30);
+
+        fontStyleLabel = new JLabel("Style:");
+        fontStyleLabel.setBounds(210, 5, 150, 30);
+
+        fontSizeLabel = new JLabel("Size:");
+        fontSizeLabel.setBounds(380, 5, 150, 30);
 
         okB = new JButton("OK");
         okB.setBounds(390,320, 70,30);
@@ -68,6 +83,9 @@ public class FontChooser extends JDialog implements ActionListener {
         this.add(fontStyles);
         this.add(fontSize);
         this.add(textField);
+        this.add(fontLabel);
+        this.add(fontStyleLabel);
+        this.add(fontSizeLabel);
         this.add(okB);
         this.add(cancelB);
         this.setLayout(null);
