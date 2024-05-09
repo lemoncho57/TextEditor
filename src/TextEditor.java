@@ -1,11 +1,11 @@
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.io.*;
 
-public class TextEditor extends JFrame implements ActionListener {
+public class TextEditor extends JFrame implements ActionListener, DocumentListener {
 
     private JTextArea textArea;
     private JScrollPane scrollPane;
@@ -13,6 +13,8 @@ public class TextEditor extends JFrame implements ActionListener {
     private JMenu fileMenu;
     private JMenu editMenu;
     private JMenu helpMenu;
+    private JMenuItem newFileItem;
+    private JMenuItem newWindowItem;
     private JMenuItem openMenuItem;
     private JMenuItem saveMenuItem;
     private JMenuItem saveAsMenuItem;
@@ -20,6 +22,7 @@ public class TextEditor extends JFrame implements ActionListener {
     private JMenuItem copyMenuItem;
     private JMenuItem pasteMenuItem;
     private JMenuItem cutMenuItem;
+    private JCheckBoxMenuItem wordWrapItem;
     private JMenuItem fontSettigsItem;
     private JMenuItem aboutMenuItem;
 
@@ -31,15 +34,45 @@ public class TextEditor extends JFrame implements ActionListener {
 
     public static Font font = new Font("Roboto", Font.PLAIN, 14);
 
+    private boolean unsavedChanges = false;
+
+    private final String frameLabel = "Text Editor | Lemoncho";
+
     public TextEditor(){
-        this.setTitle("Text Editor | Lemoncho");
+        this.setTitle(frameLabel);
         this.setSize(1000, 600);
+
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                super.windowClosing(e);
+
+                if (unsavedChanges)
+                {
+                    setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+                    int v = showUnsavedChangesDialog();
+                    if (v ==  JOptionPane.YES_OPTION)
+                    {
+                        unsavedChanges = false;
+                        saveFile();
+                        dispose();
+                    } else if (v == JOptionPane.NO_OPTION)
+                    {
+                        unsavedChanges = false;
+                        dispose();
+                    }
+                }
+                else
+                    setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            }
+        });
 
         textArea = new JTextArea();
         textArea.setEditable(true);
         textArea.setLineWrap(false);
         textArea.setFont(font);
         textArea.setSize(this.getSize());
+        textArea.getDocument().addDocumentListener(this);
 
         scrollPane = new JScrollPane(textArea);
 
@@ -62,6 +95,10 @@ public class TextEditor extends JFrame implements ActionListener {
         editMenu = new JMenu("Edit");
         helpMenu = new JMenu("Help");
 
+        newFileItem = new JMenuItem("New");
+        newFileItem.addActionListener(this);
+        newWindowItem = new JMenuItem("New Window");
+        newWindowItem.addActionListener(this);
         openMenuItem = new JMenuItem("Open");
         openMenuItem.addActionListener(this);
         saveMenuItem = new JMenuItem("Save");
@@ -76,6 +113,8 @@ public class TextEditor extends JFrame implements ActionListener {
         pasteMenuItem.addActionListener(this);
         cutMenuItem = new JMenuItem("Cut");
         cutMenuItem.addActionListener(this);
+        wordWrapItem = new JCheckBoxMenuItem("Word Wrap");
+        wordWrapItem.addActionListener(this);
         fontSettigsItem = new JMenuItem("Font Settings");
         fontSettigsItem.addActionListener(this);
         aboutMenuItem = new JMenuItem("About");
@@ -85,14 +124,19 @@ public class TextEditor extends JFrame implements ActionListener {
         menuBar.add(editMenu);
         menuBar.add(helpMenu);
 
+        fileMenu.add(newFileItem);
+        fileMenu.add(newWindowItem);
         fileMenu.add(openMenuItem);
         fileMenu.add(saveMenuItem);
         fileMenu.add(saveAsMenuItem);
+        fileMenu.addSeparator();
         fileMenu.add(exitMenuItem);
 
         editMenu.add(copyMenuItem);
         editMenu.add(pasteMenuItem);
         editMenu.add(cutMenuItem);
+        editMenu.addSeparator();
+        editMenu.add(wordWrapItem);
         editMenu.add(fontSettigsItem);
 
         helpMenu.add(aboutMenuItem);
@@ -100,13 +144,19 @@ public class TextEditor extends JFrame implements ActionListener {
         this.setContentPane(scrollPane);
         //this.getContentPane().add(scrollPane);
         this.setJMenuBar(menuBar);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setLocationRelativeTo(null);
         this.setVisible(true);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == newFileItem)
+            newFile();
+
+        if (e.getSource() == newWindowItem)
+            new TextEditor();
+
         if(e.getSource() == openMenuItem)
             openFile();
 
@@ -133,6 +183,9 @@ public class TextEditor extends JFrame implements ActionListener {
             JOptionPane.showMessageDialog(null, "This is a text editor that includes features like \nchanging the font and is made in java", "About",JOptionPane.INFORMATION_MESSAGE);
         }
 
+        if (e.getSource() == wordWrapItem)
+            textArea.setLineWrap(!textArea.getLineWrap());
+
         if (e.getSource() == fontSettigsItem)
         {
             new FontChooser(this, true);
@@ -140,12 +193,55 @@ public class TextEditor extends JFrame implements ActionListener {
         }
     }
 
+    private void newFile()
+    {
+        int v = showUnsavedChangesDialog();
+        if (v == JOptionPane.YES_OPTION)
+        {
+            saveFile();
+            textArea.setText("");
+            unsavedChanges = false;
+            setTitle(frameLabel);
+        } else if (v == JOptionPane.NO_OPTION)
+        {
+            textArea.setText("");
+            unsavedChanges = false;
+            setTitle(frameLabel);
+        }
+    }
+
     private void openFile(){
         try {
-            int v = fileChooser.showOpenDialog(null);
-            if (v == JFileChooser.APPROVE_OPTION) {
-                file = fileChooser.getSelectedFile();
-                setTextToFile();
+            if (unsavedChanges) {
+                int answer = showUnsavedChangesDialog();
+                if (answer == JOptionPane.YES_OPTION) {
+                    saveFile();
+
+                    int v = fileChooser.showOpenDialog(null);
+                    if (v == JFileChooser.APPROVE_OPTION) {
+                        file = fileChooser.getSelectedFile();
+                        setTextToFile();
+                        unsavedChanges = false;
+                        this.setTitle(frameLabel);
+                    }
+                } else if (answer == JOptionPane.NO_OPTION) {
+
+                    int v = fileChooser.showOpenDialog(null);
+                    if (v == JFileChooser.APPROVE_OPTION) {
+                        file = fileChooser.getSelectedFile();
+                        setTextToFile();
+                        unsavedChanges = false;
+                        this.setTitle(frameLabel);
+                    }
+                }
+            }else {
+                int v = fileChooser.showOpenDialog(null);
+                if (v == JFileChooser.APPROVE_OPTION) {
+                    file = fileChooser.getSelectedFile();
+                    setTextToFile();
+                    unsavedChanges = false;
+                    this.setTitle(frameLabel);
+                }
             }
 
         }catch (Exception ex){
@@ -157,12 +253,16 @@ public class TextEditor extends JFrame implements ActionListener {
             if (file != null)
             {
                 saveFileToDisk();
+                unsavedChanges = false;
+                this.setTitle(frameLabel);
             }
             else {
                 int v = fileChooser.showSaveDialog(null);
                 if (v == JFileChooser.APPROVE_OPTION) {
                     file = fileChooser.getSelectedFile();
                     saveFileToDisk();
+                    unsavedChanges = false;
+                    this.setTitle(frameLabel);
                 }
             }
         }catch (Exception ex){
@@ -177,6 +277,8 @@ public class TextEditor extends JFrame implements ActionListener {
             if (v == JFileChooser.APPROVE_OPTION) {
                 file = fileChooser.getSelectedFile();
                 saveFileToDisk();
+                unsavedChanges = false;
+                this.setTitle(frameLabel);
             }
         }catch (Exception ex)
         {
@@ -258,4 +360,28 @@ public class TextEditor extends JFrame implements ActionListener {
             ex.printStackTrace();
         }
     }
+
+    private int showUnsavedChangesDialog()
+    {
+        return JOptionPane.showConfirmDialog(null, "You have unsaved changes! \nDo you want to save them?", "Unsaved changes", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+    }
+
+    @Override
+    public void insertUpdate(DocumentEvent e) {
+        unsavedChanges = true;
+        this.setTitle(frameLabel + "*");
+    }
+
+    @Override
+    public void removeUpdate(DocumentEvent e) {
+        unsavedChanges = true;
+        this.setTitle(frameLabel + "*");
+    }
+
+    @Override
+    public void changedUpdate(DocumentEvent e) {
+        unsavedChanges = true;
+        this.setTitle(frameLabel + "*");
+    }
+
 }
