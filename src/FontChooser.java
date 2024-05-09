@@ -38,6 +38,7 @@ public class FontChooser extends JDialog implements ActionListener {
         textField.setBounds(40, 90, 200,30);
         textField.setFont(font);
         textField.setEditable(false);
+        textField.setFocusable(false);
 
         fontNames = new JComboBox<>(fonts);
         fontNames.setBounds(40,30, 150,30);
